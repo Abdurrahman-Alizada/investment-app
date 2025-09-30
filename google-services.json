@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "618098659319",
+    "project_id": "hunainvest-5a38a",
+    "storage_bucket": "hunainvest-5a38a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:618098659319:android:51eebac25fab651a3228f2",
+        "android_client_info": {
+          "package_name": "com.hunainvest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA483pIb27pAmDkRByub071XFOJzJ_pZII"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "HunaInvest",
+  "displayName": "Huna Invest",
+
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-8600732172789254~4605711378",
+    "ios_app_id": "ca-app-pub-8600732172789254~2980881315"
+  }
+}
