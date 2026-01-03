@@ -1,79 +1,90 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# HunaInvest
 
-# Getting Started
+A mobile investment simulation app built with React Native. Practice investing in Solar Power, Real Estate, Gold, and Stocks in a risk-free environment.
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+## Features
 
-## Step 1: Start the Metro Server
+- Multiple investment options (Solar, Apartments, Gold, Stocks)
+- Portfolio tracking with charts and analytics
+- Multi-currency support
+- Referral rewards system
+- Daily login rewards
+- Real-time investment tracking
+- Dark mode support
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+## Tech Stack
 
-To start Metro, run the following command from the _root_ of your React Native project:
+- React Native 0.76.7
+- Firebase (Auth & Firestore)
+- React Navigation
+- Google Mobile Ads
+- OneSignal (Push Notifications)
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (>= 18)
+- React Native development environment
+- Firebase account
+- AdMob account (optional)
+
+### Installation
 
 ```bash
-# using npm
+# Clone the repository
+git clone <repository-url>
+cd HunaInvest-main
+
+# Install dependencies
+npm install
+
+# iOS only
+cd ios && pod install && cd ..
+```
+
+### Configuration
+
+1. Create a Firebase project and add your configuration files
+2. Set up Firebase Authentication and Firestore
+3. (Optional) Configure Google AdMob for monetization
+4. (Optional) Set up OneSignal for push notifications
+
+### Run the App
+
+```bash
+# Start Metro
 npm start
 
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Start your Application
-
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
-
-### For Android
-
-```bash
-# using npm
+# Run on Android
 npm run android
 
-# OR using Yarn
-yarn android
-```
-
-### For iOS
-
-```bash
-# using npm
+# Run on iOS
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
+## Project Structure
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+```text
+src/
+├── screens/        # App screens
+├── components/     # Reusable components
+├── navigator/      # Navigation setup
+├── utils/          # Helper functions
+└── ads/           # Ad configuration
+```
 
-## Step 3: Modifying your App
+## Investment Types
 
-Now that you have successfully run the app, let's modify it.
+- **Solar Power** - Clean energy investments
+- **Apartments** - Real estate opportunities
+- **Gold** - Precious metals trading
+- **Stocks** - Stock market simulation
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
+## License
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+MIT License
 
-## Congratulations! :tada:
+---
 
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Built with React Native
