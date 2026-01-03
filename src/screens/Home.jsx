@@ -39,15 +39,12 @@ import {
 } from 'firebase/firestore';
 import {auth, db} from '../utils/firebase';
 import {CurrencyContext} from '../../contexts/CurrencyContext';
-import {
-  BannerAd,
-  BannerAdSize,
-  TestIds,
-  InterstitialAd,
-  AdEventType,
-} from 'react-native-google-mobile-ads';
 import {useFocusEffect} from '@react-navigation/native';
-import {bannerAdId, interstitialAdId} from '../ads/adsConfig';
+import {bannerAdId, interstitialAdId, rewardedAdId, AD_PERFORMANCE} from '../ads/adsConfig';
+import EnhancedBannerAd from '../components/ads/EnhancedBannerAd';
+import {useInterstitialAd} from '../components/ads/InterstitialAdManager';
+import {useRewardedAd} from '../components/ads/RewardedAdManager';
+import AdDebugPanel from '../components/ads/AdDebugPanel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Colors} from '../../constants/Colors';
 import LoaderAnim from '../components/Loader';
@@ -74,46 +71,53 @@ export default function Home({navigation}) {
   const [remainingDays, setRemainingDays] = useState(5);
   const [isRewardReady, setIsRewardReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
+  const [screenTime, setScreenTime] = useState(0);
+  const [showAdDebug, setShowAdDebug] = useState(false);
 
   const {selectedCurrency, convertCurrency} = useContext(CurrencyContext);
   const user = auth.currentUser;
+  
+  // Use enhanced interstitial ad manager
+  const {
+    isLoaded: interstitialLoaded,
+    show: showInterstitial,
+    showAfterUserAction,
+    getStats: getAdStats,
+  } = useInterstitialAd();
 
-  console.log('bannerAdId', bannerAdId);
+  // Use rewarded ad manager
+  const {
+    isLoaded: rewardedLoaded,
+    show: showRewardedAd,
+    getStats: getRewardedStats,
+  } = useRewardedAd();
 
-  // Initialize interstitial ad
-  const interstitial = InterstitialAd.createForAdRequest(interstitialAdId, {
-    keywords: ['fashion', 'clothing'],
-  });
+  // Log ad info only in development
+  if (__DEV__) {
+    console.log('bannerAdId', bannerAdId);
+  }
 
   useEffect(() => {
     checkReferralStatus();
   }, [userData]);
 
-  // Ad event listeners
+  // Track user interaction and screen time for progressive ad loading
   useEffect(() => {
-    const unsubscribeLoaded = interstitial.addAdEventListener(
-      AdEventType.LOADED,
-      () => setLoaded(true),
-    );
+    const timer = setInterval(() => {
+      setScreenTime(prev => prev + 1);
+    }, 1000);
 
-    const unsubscribeOpened = interstitial.addAdEventListener(
-      AdEventType.OPENED,
-      () => Platform.OS === 'ios' && StatusBar.setHidden(true),
-    );
-
-    const unsubscribeClosed = interstitial.addAdEventListener(
-      AdEventType.CLOSED,
-      () => Platform.OS === 'ios' && StatusBar.setHidden(false),
-    );
-
-    interstitial.load();
-
-    return () => {
-      unsubscribeLoaded();
-      unsubscribeOpened();
-      unsubscribeClosed();
-    };
+    return () => clearInterval(timer);
   }, []);
+
+  // Mark user as interacted after some engagement
+  useEffect(() => {
+    if (screenTime > 10 && !userInteracted) { // 10 seconds of screen time
+      setUserInteracted(true);
+      console.log('🎯 User interaction detected, enabling progressive ad loading');
+    }
+  }, [screenTime, userInteracted]);
 
   // Initial data loading
   useEffect(() => {
@@ -403,7 +407,22 @@ export default function Home({navigation}) {
     return dateObj.toLocaleDateString();
   }
 
-  // Investment plans data
+  // Enhanced investment plan navigation with smart ad showing
+  const handleInvestmentNavigation = (screenName, actionType = 'navigation') => {
+    // Show interstitial ad before navigation if conditions are met
+    const adShown = showAfterUserAction(actionType);
+    
+    if (adShown) {
+      // Navigate after a short delay to allow ad to show
+      setTimeout(() => {
+        navigation.navigate(screenName);
+      }, 500);
+    } else {
+      navigation.navigate(screenName);
+    }
+  };
+
+  // Investment plans data with enhanced navigation
   const investmentsPlans = [
     {
       id: 1,
@@ -411,7 +430,7 @@ export default function Home({navigation}) {
       subTitle: 'Clean Energy Investment',
       backgroundColor: '#4CAF50',
       icon: 'solar-power',
-      screennavigation: () => navigation.navigate('SolarPosters'),
+      screennavigation: () => handleInvestmentNavigation('SolarPosters', 'investment_view'),
     },
     {
       id: 2,
@@ -419,7 +438,7 @@ export default function Home({navigation}) {
       subTitle: 'Property Investment',
       backgroundColor: '#1976D2',
       icon: 'home-city',
-      screennavigation: () => navigation.navigate('ApartmentPosters'),
+      screennavigation: () => handleInvestmentNavigation('ApartmentPosters', 'investment_view'),
     },
     {
       id: 3,
@@ -427,7 +446,7 @@ export default function Home({navigation}) {
       subTitle: 'Precious Metals',
       backgroundColor: '#FFA000',
       icon: 'gold',
-      screennavigation: () => navigation.navigate('GoldPurchase'),
+      screennavigation: () => handleInvestmentNavigation('GoldPurchase', 'investment_view'),
     },
     {
       id: 4,
@@ -435,7 +454,7 @@ export default function Home({navigation}) {
       subTitle: 'Market Trading',
       backgroundColor: '#7B1FA2',
       icon: 'chart-line',
-      screennavigation: () => navigation.navigate('StocksList'),
+      screennavigation: () => handleInvestmentNavigation('StocksList', 'investment_view'),
     },
   ];
 
@@ -507,14 +526,15 @@ export default function Home({navigation}) {
       <Drawer navigation={navigation} />
       <SafeAreaView style={styles.container}>
         <StatusBar style={theme} />
-        <BannerAd
-          unitId={bannerAdId}
-          sizes={[
-            BannerAdSize.ANCHORED_ADAPTIVE_BANNER,
-            BannerAdSize.FULL_BANNER,
-          ]}
-          onAdLoaded={() => console.log('Ad loaded!ghhh')}
-          onAdFailedToLoad={err => console.log('Ad failed:', err)}
+        <EnhancedBannerAd
+          navigation={navigation}
+          onAdLoaded={() => console.log('✅ Enhanced banner ad loaded successfully')}
+          onAdFailedToLoad={err => console.log('❌ Enhanced banner ad failed:', err)}
+          delayLoad={false}
+          delayTime={0}
+          fallbackType="tip"
+          showFallback={true}
+          style={styles.bannerAdContainer}
         />
         <View style={styles.content}>
           <Header
@@ -529,15 +549,39 @@ export default function Home({navigation}) {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}>
             <View style={styles.welcomeSection}>
-              <CustomHeaderText title={`Welcome ${userData?.name ?? ''}`} />
-              <Text style={styles.dateText}>
-                {new Date().toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </Text>
+              <View style={styles.welcomeHeader}>
+                <View>
+                  <CustomHeaderText title={`Welcome ${userData?.name ?? ''}`} />
+                  <Text style={styles.dateText}>
+                    {new Date().toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                </View>
+                <View style={styles.debugContainer}>
+                  {__DEV__ && (
+                    <TouchableOpacity
+                      onPress={() => setShowAdDebug(true)}
+                      style={styles.debugButton}>
+                      <Icon name="bug" size={20} color="#6C63FF" />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (rewardedLoaded) {
+                        showRewardedAd();
+                      } else {
+                        console.log('⚠️ Rewarded ad not ready');
+                      }
+                    }}
+                    style={[styles.debugButton, {backgroundColor: rewardedLoaded ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 193, 7, 0.1)'}]}>
+                    <Icon name="gift" size={20} color={rewardedLoaded ? "#4CAF50" : "#FFC107"} />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
 
             <View style={[styles.portfolioCard, {backgroundColor: '#6C63FF'}]}>
@@ -560,9 +604,10 @@ export default function Home({navigation}) {
                 <TouchableOpacity
                   style={styles.investButton}
                   activeOpacity={0.9}
-                  onPress={() =>
-                    navigation.navigate('Tabs', {screen: 'Portfolio'})
-                  }
+                  onPress={() => {
+                    showAfterUserAction('portfolio_view');
+                    navigation.navigate('Tabs', {screen: 'Portfolio'});
+                  }}
                   // onPress={handleTestNotification}
                 >
                   <Text style={styles.investButtonText}>My Portfolio</Text>
@@ -680,6 +725,16 @@ export default function Home({navigation}) {
             </View>
           </View>
         </Modal>
+
+        {/* Ad Debug Panel - Development only */}
+        {__DEV__ && (
+          <AdDebugPanel
+            visible={showAdDebug}
+            onClose={() => setShowAdDebug(false)}
+            interstitialStats={getAdStats()}
+            rewardedStats={getRewardedStats()}
+          />
+        )}
       </SafeAreaView>
     </>
   );
@@ -703,6 +758,20 @@ const createStyles = theme =>
     },
     welcomeSection: {
       marginBottom: 16,
+    },
+    welcomeHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    debugContainer: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    debugButton: {
+      padding: 8,
+      borderRadius: 8,
+      backgroundColor: 'rgba(108, 99, 255, 0.1)',
     },
     dateText: {
       fontSize: 14,
@@ -943,5 +1012,9 @@ const createStyles = theme =>
     modalButtonText: {
       color: 'white',
       fontWeight: 'bold',
+    },
+    bannerAdContainer: {
+      marginHorizontal: 8,
+      marginVertical: 4,
     },
   });
